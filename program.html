@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo page_clean($current_program['title']); ?> - Baspana Smart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --kaspi-red: #E12A2A;
+            --kaspi-red-hover: #C52222;
+            --bg-gray: #F5F5F6;
+            --bg-white: #FFFFFF;
+            --text-dark: #1A1A1A;
+            --text-gray: #757575;
+            --border-light: #EBEBEB;
+            --radius-card: 14px;
+            --radius-btn: 12px;
+            --prog-color: <?php echo page_clean($current_program_color); ?>;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: #F7F7F8; color: var(--text-dark); line-height: 1.6; padding-top: 70px; }
+
+        /* Жоғарғы Навигация */
+        header { background: var(--bg-white); padding: 16px 5%; display: flex; justify-content: space-between; align-items: center; position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid var(--border-light); }
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .hamburger-btn { font-size: 1.5rem; cursor: pointer; color: var(--text-dark); transition: 0.2s; }
+        .hamburger-btn:hover { color: var(--kaspi-red); }
+        .logo { font-size: 1.2rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-back { display: flex; align-items: center; gap: 8px; color: var(--text-dark); text-decoration: none; font-weight: 600; font-size: 0.95rem; background: var(--bg-gray); padding: 8px 16px; border-radius: var(--radius-btn); transition: 0.2s; }
+        .btn-back:hover { background: #E4E4E4; }
+        
+        /* Бүйірлік мәзір */
+        .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100vh; background: var(--bg-white); z-index: 2000; transition: 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; box-shadow: 4px 0 24px rgba(0,0,0,0.08); }
+        .sidebar.open { left: 0; }
+        .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-header i { cursor: pointer; font-size: 1.2rem; color: var(--text-dark); transition: 0.2s; }
+        .sidebar-header i:hover { color: var(--kaspi-red); }
+        .sidebar-item { padding: 14px 16px; display: flex; align-items: center; gap: 16px; color: var(--text-dark); text-decoration: none; font-weight: 500; transition: 0.2s; border-radius: var(--radius-btn); margin: 4px 16px; font-size: 0.95rem; }
+        .sidebar-item:hover { background: var(--bg-gray); }
+        .sidebar-item.active { background: #FEECEB; color: var(--kaspi-red); }
+        .sidebar-item i { width: 20px; text-align: center; color: var(--text-gray); }
+        .sidebar-item.active i { color: var(--kaspi-red); }
+        .sidebar-section-title { padding: 24px 16px 8px; font-size: 0.8rem; color: var(--text-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1500; display: none; opacity: 0; transition: 0.3s; }
+        .menu-overlay.open { opacity: 1; display: block; }
+
+        /* БАҒДАРЛАМА БЕТІНІҢ СТИЛДЕРІ (ЖАҢАРТЫЛҒАН) */
+        .program-container { max-width: 1100px; margin: 40px auto 80px; padding: 0 20px; }
+        
+        .prog-header { background: var(--bg-white); border-radius: var(--radius-card); padding: 40px; display: flex; align-items: center; gap: 32px; margin-bottom: 32px; border: 1px solid var(--border-light); position: relative; overflow: hidden; }
+        .prog-header::before { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--prog-color); }
+        
+        .prog-icon { width: 88px; height: 88px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; background: var(--prog-color); flex-shrink: 0; }
+        .prog-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 12px; color: var(--text-dark); letter-spacing: -0.5px; }
+        .prog-desc { font-size: 1.05rem; color: var(--text-gray); max-width: 700px; line-height: 1.6; }
+
+        /* ЖЫЛДАМ СТАТИСТИКА БЛОГЫ */
+        .quick-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 32px; }
+        .stat-card { background: var(--bg-white); padding: 24px; border-radius: var(--radius-card); border: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 8px; }
+        .stat-card i { font-size: 1.5rem; color: var(--prog-color); margin-bottom: 8px; }
+        .stat-title { font-size: 0.85rem; color: var(--text-gray); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); }
+
+        .content-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 32px; }
+        
+        .card { background: var(--bg-white); padding: 32px; border-radius: var(--radius-card); border: 1px solid var(--border-light); margin-bottom: 32px; }
+        .card h3 { font-size: 1.4rem; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; color: var(--text-dark); }
+        .card h3 i { color: var(--prog-color); font-size: 1.2rem; }
+        
+        .list-items { list-style: none; }
+        .list-items li { margin-bottom: 16px; display: flex; gap: 16px; font-size: 1.05rem; align-items: flex-start; color: var(--text-dark); }
+        .list-items i { color: var(--prog-color); margin-top: 4px; font-size: 1.1rem; }
+
+        /* ТАЙМЛАЙН (ҚАДАМДАР) СТИЛІ */
+        .timeline { position: relative; margin-left: 16px; padding-left: 32px; border-left: 2px dashed var(--border-light); list-style: none; }
+        .timeline li { position: relative; margin-bottom: 28px; font-size: 1.05rem; color: var(--text-dark); }
+        .timeline li:last-child { margin-bottom: 0; }
+        .timeline li::before { 
+            content: ''; position: absolute; left: -41px; top: 2px; 
+            width: 16px; height: 16px; background: var(--prog-color); 
+            border-radius: 50%; border: 4px solid var(--bg-white); 
+            box-shadow: 0 0 0 2px var(--border-light); 
+        }
+
+        .apply-btn { 
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            width: 100%; padding: 16px; background: var(--prog-color); color: white; 
+            text-decoration: none; border-radius: var(--radius-btn); font-size: 1rem; 
+            font-weight: 700; transition: 0.2s; cursor: pointer; border: none; 
+            margin-top: 14px;
+        }
+        .apply-btn:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+        .call-to-action-box { background: var(--bg-gray); border-radius: var(--radius-btn); padding: 22px; border: 1px solid var(--border-light); }
+        .call-to-action-box p { font-size: 0.95rem; color: var(--text-gray); margin-bottom: 16px; }
+        .consult-form { display: grid; gap: 12px; margin-top: 16px; }
+        .consult-form label { display: block; color: var(--text-gray); font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; text-align: left; }
+        .consult-form input, .consult-form textarea { width: 100%; border: 1px solid transparent; border-radius: var(--radius-btn); background: #fff; padding: 13px 14px; color: var(--text-dark); font: inherit; outline: none; }
+        .consult-form textarea { min-height: 92px; resize: vertical; }
+        .consult-form input:focus, .consult-form textarea:focus { border-color: var(--prog-color); box-shadow: 0 0 0 3px rgba(225,42,42,0.1); }
+        .form-note { font-size: 0.82rem; color: var(--text-gray); text-align: left; }
+        .form-alert { padding: 12px 14px; border-radius: var(--radius-btn); font-size: 0.92rem; font-weight: 600; margin-bottom: 12px; }
+        .form-alert.success { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; }
+        .form-alert.error { background: #FEECEB; color: #C52222; border: 1px solid #FAD2D2; }
+
+        @media (max-width: 900px) {
+            .content-grid { grid-template-columns: 1fr; }
+            .prog-header { flex-direction: column; text-align: center; gap: 20px; padding: 30px 20px; }
+            .prog-header::before { width: 100%; height: 6px; }
+            .quick-stats { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 500px) {
+            .quick-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- БҮЙІРЛІК МӘЗІР -->
+<div class="menu-overlay" id="menuOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <a href="index.php" class="logo"><i class="fas fa-home"></i> Baspana</a>
+        <i class="fas fa-times" onclick="toggleSidebar()"></i>
+    </div>
+    
+    <div class="sidebar-menu">
+        <a href="index.php#calculator" class="sidebar-item"><i class="fas fa-magic"></i> Smart Талдау</a>
+        <a href="index.php#detailed-calc" class="sidebar-item"><i class="fas fa-sliders-h"></i> Толық калькулятор</a>
+        
+        <div class="sidebar-section-title">Мемлекеттік бағдарламалар</div>
+        
+        <!-- БАРЛЫҚ БАҒДАРЛАМАЛАРДЫ ШЫҒАРУ (ДИНАМИКАЛЫҚ) -->
+        <?php foreach ($programs as $key => $prog): ?>
+            <a href="program.php?id=<?php echo rawurlencode($key); ?>" class="sidebar-item <?php echo ($key == $program_id) ? 'active' : ''; ?>">
+                <i class="fas <?php echo page_clean($prog['icon'] ?? 'fa-home'); ?>"></i> <?php echo page_clean($prog['title']); ?>
+            </a>
+        <?php endforeach; ?>
+        <?php if($is_admin): ?>
+            <div class="sidebar-section-title">Басқару</div>
+            <a href="admin.php" class="sidebar-item"><i class="fas fa-user-shield"></i> Админ панель</a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<header>
+    <div class="header-left">
+        <i class="fas fa-bars hamburger-btn" onclick="toggleSidebar()"></i>
+        <a href="index.php" class="btn-back"><i class="fas fa-arrow-left"></i> Басты бетке қайту</a>
+    </div>
+</header>
+
+<div class="program-container">
+    
+    <div class="prog-header">
+        <div class="prog-icon"><i class="fas <?php echo page_clean($current_program['icon'] ?? 'fa-home'); ?>"></i></div>
+        <div>
+            <h1 class="prog-title"><?php echo page_clean($current_program['title']); ?></h1>
+            <p class="prog-desc"><?php echo page_clean($current_program['desc']); ?></p>
+        </div>
+    </div>
+
+    <!-- ЖЫЛДАМ СТАТИСТИКА (QUICK STATS) -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <i class="fas fa-percent"></i>
+            <span class="stat-title">Мөлшерлеме</span>
+            <span class="stat-value"><?php echo page_clean($current_program['rate']); ?></span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-wallet"></i>
+            <span class="stat-title">Алғашқы жарна</span>
+            <span class="stat-value"><?php echo page_clean($current_program['fee']); ?></span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="stat-title">Несие мерзімі</span>
+            <span class="stat-value"><?php echo page_clean($current_program['term']); ?></span>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-money-bill-wave"></i>
+            <span class="stat-title">Максималды сома</span>
+            <span class="stat-value"><?php echo page_clean($current_program['max_amount']); ?></span>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="left-col">
+            <div class="card">
+                <h3><i class="fas fa-bullseye"></i> Кімдерге арналған?</h3>
+                <p style="font-size: 1.1rem; font-weight: 600; color: var(--prog-color); padding: 16px; background: var(--bg-gray); border-radius: 12px; margin-bottom: 20px;">
+                    <?php echo page_clean($current_program['audience']); ?>
+                </p>
+                
+                <h3 style="margin-top: 30px;"><i class="fas fa-list-check"></i> Басты артықшылықтары</h3>
+                <ul class="list-items">
+                    <?php foreach(($current_program['features'] ?? []) as $feature): ?>
+                        <li><i class="fas fa-check-circle"></i> <span><?php echo page_clean($feature); ?></span></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-folder-open"></i> Қажетті құжаттар мен талаптар</h3>
+                <ul class="list-items">
+                    <?php foreach(($current_program['reqs'] ?? []) as $req): ?>
+                        <li><i class="fas fa-file-alt" style="color: #94A3B8;"></i> <span><?php echo page_clean($req); ?></span></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card">
+                <h3><i class="fas fa-shoe-prints"></i> Қадамдық нұсқаулық</h3>
+                <ul class="timeline">
+                    <?php foreach(($current_program['steps'] ?? []) as $step): ?>
+                        <li><?php echo page_clean($step); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                
+                <div style="margin-top: 40px;" id="consultation">
+                    <div class="call-to-action-box">
+                        <p>Осы бағдарлама бойынша жеке кеңес алу үшін өтініш қалдырыңыз. Өтініш админ панельге бірден түседі.</p>
+                        <?php if($consultation_success): ?>
+                            <div class="form-alert success"><i class="fas fa-check-circle"></i> <?php echo page_clean($consultation_success); ?></div>
+                        <?php endif; ?>
+                        <?php if($consultation_error): ?>
+                            <div class="form-alert error"><i class="fas fa-exclamation-circle"></i> <?php echo page_clean($consultation_error); ?></div>
+                        <?php endif; ?>
+                        <form method="POST" class="consult-form">
+                            <input type="hidden" name="action" value="consultation_request">
+                            <input type="hidden" name="csrf_token" value="<?php echo page_clean($_SESSION['consultation_csrf_token']); ?>">
+                            <div>
+                                <label>Атыңыз</label>
+                                <input type="text" name="name" value="<?php echo page_clean($_POST['name'] ?? ($user_data['name'] ?? '')); ?>" placeholder="Атыңызды енгізіңіз" required>
+                            </div>
+                            <div>
+                                <label>Телефон</label>
+                                <input type="tel" name="phone" value="<?php echo page_clean($_POST['phone'] ?? ''); ?>" placeholder="+7 700 000 00 00" required>
+                            </div>
+                            <div>
+                                <label>Email</label>
+                                <input type="email" name="email" value="<?php echo page_clean($_POST['email'] ?? ($user_data['email'] ?? '')); ?>" placeholder="mail@example.kz">
+                            </div>
+                            <div>
+                                <label>Қысқаша сұрағыңыз</label>
+                                <textarea name="message" placeholder="Мысалы: бастапқы жарнам жеткілікті ме?"><?php echo page_clean($_POST['message'] ?? ''); ?></textarea>
+                            </div>
+                            <button class="apply-btn" type="submit">
+                                Кеңес алуға өтініш қалдыру <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <div class="form-note">Бағдарлама: <?php echo page_clean($current_program['title']); ?></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('menuOverlay');
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+            setTimeout(() => { overlay.style.display = 'none'; }, 300);
+        } else {
+            overlay.style.display = 'block';
+            setTimeout(() => { sidebar.classList.add('open'); overlay.classList.add('open'); }, 10);
+        }
+    }
+</script>
+
+</body>
+</html>
