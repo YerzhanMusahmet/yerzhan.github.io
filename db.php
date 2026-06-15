@@ -1,8 +1,8 @@
 <?php
-$host = 'localhost';
-$dbname = 'baspana_db';
-$username = 'root'; // XAMPP-та әдепкі логин осылай
-$password = '';     // XAMPP-та әдепкі құпиясөз бос болады
+$host = "sql113.infinityfree.com";
+$dbname = "if0_42191133_yerzhan";
+$username = "if0_42191133";
+$password = "yerzhan07";
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
