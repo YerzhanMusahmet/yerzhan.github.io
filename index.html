@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="kk">
 <head>
 <meta charset="UTF-8">
@@ -155,7 +155,7 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
 </head>
 <body>
 
-<input type="hidden" id="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+<input type="hidden" id="csrf_token" value="static-csrf-token">
 
 <div class="menu-overlay" id="menuOverlay" onclick="toggleSidebar()"></div>
 <div class="sidebar" id="sidebar">
@@ -181,22 +181,32 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
         </a>
 
         <div class="sidebar-section" style="margin-top: 10px;">Барлық бағдарламалар</div>
-        <?php foreach ($program_menu_items as $program_id => $program_meta): ?>
-            <a href="program.php?id=<?php echo rawurlencode($program_id); ?>" class="sidebar-item">
-                <i class="fas <?php echo clean_xss($program_meta['icon'] ?? 'fa-home'); ?>"></i> <?php echo clean_xss($program_meta['title'] ?? $program_id); ?>
-            </a>
-        <?php endforeach; ?>
-    </div>
+                    <a href="program-baspana_7_20_25.html" class="sidebar-item">
+                <i class="fas fa-home"></i> «7-20-25»            </a>
+                    <a href="program-nauryz_social.html" class="sidebar-item">
+                <i class="fas fa-leaf"></i> «Наурыз» (Әлеуметтік)            </a>
+                    <a href="program-nauryz_jumysker.html" class="sidebar-item">
+                <i class="fas fa-briefcase"></i> «Наурыз жұмыскер»            </a>
+                    <a href="program-otau.html" class="sidebar-item">
+                <i class="fas fa-key"></i> «Отау»            </a>
+                    <a href="program-zhas_otbasy.html" class="sidebar-item">
+                <i class="fas fa-users"></i> «Жас Отбасы»            </a>
+                    <a href="program-standard_50_50.html" class="sidebar-item">
+                <i class="fas fa-percent"></i> Аралық заем (50/50)            </a>
+                    <a href="program-umay.html" class="sidebar-item">
+                <i class="fas fa-female"></i> «Ұмай» әйелдерге            </a>
+                    <a href="program-oz_uim.html" class="sidebar-item">
+                <i class="fas fa-building"></i> «Өз үйім»            </a>
+                    <a href="program-green_mortgage.html" class="sidebar-item">
+                <i class="fas fa-seedling"></i> «Жасыл ипотека»            </a>
+                    <a href="program-nauryz_askery.html" class="sidebar-item">
+                <i class="fas fa-shield-alt"></i> «Наурыз Әскери»            </a>
+                    <a href="program-askery_baspana.html" class="sidebar-item">
+                <i class="fas fa-star"></i> «Әскери баспана»            </a>
+            </div>
     <div class="sidebar-bottom">
-        <?php if(isset($_SESSION['user_id'])): ?>
-            <?php if($is_admin): ?>
-                <a href="admin.php" class="sidebar-item"><i class="fas fa-user-shield"></i> Админ панель</a>
-            <?php endif; ?>
-            <a href="profile.php" class="sidebar-item"><i class="fas fa-user"></i> Жеке кабинет</a>
-            <a href="logout.php" class="sidebar-item" style="color: var(--kaspi-red);"><i class="fas fa-sign-out-alt"></i> Шығу</a>
-        <?php else: ?>
-            <a href="login.php" class="sidebar-item"><i class="fas fa-sign-in-alt"></i> Жүйеге кіру</a>
-        <?php endif; ?>
+            <a href="admin.html" class="sidebar-item"><i class="fas fa-user-shield"></i> Админ панель</a>
+            <a href="login.html" class="sidebar-item"><i class="fas fa-sign-in-alt"></i> Жүйеге кіру</a>
     </div>
 </div>
 
@@ -206,13 +216,8 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
         <div class="logo"><i class="fas fa-home"></i> Baspana Smart</div>
     </div>
     <nav>
-        <?php if(isset($_SESSION['user_id'])): ?>
-            <?php if($is_admin): ?><a href="admin.php"><i class="fas fa-user-shield" style="color: var(--kaspi-red);"></i> Админ панель</a><?php endif; ?>
-            <a href="profile.php" style="color: var(--text-dark);"><i class="fas fa-user-circle" style="color: var(--kaspi-red);"></i> <?php echo clean_xss($user_data['name'] ?? ''); ?></a>
-            <a href="logout.php" class="btn-logout">Шығу</a>
-        <?php else: ?>
-            <a href="login.php" class="btn-login">Кіру</a>
-        <?php endif; ?>
+            <a href="admin.html"><i class="fas fa-user-shield" style="color: var(--kaspi-red);"></i> Админ панель</a>
+            <a href="login.html" class="btn-login">Кіру</a>
     </nav>
 </header>
 
@@ -341,12 +346,13 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
 <!-- SMART ТАЛДАУ БӨЛІМІ -->
 <section class="hero" id="calculator">
     <div class="hero-text">
-        <h1><?php echo nl2br(clean_xss($site_settings['hero_title'] ?? 'Ипотекаңызды есептеңіз')); ?></h1>
-        <p><?php echo clean_xss($site_settings['hero_text'] ?? ''); ?></p>
+        <h1>Ипотекаңызды<br />
+есептеңіз</h1>
+        <p>Отбасы банкінің және 7-20-25 сияқты мемлекеттік бағдарламалардың ішінен сіздің табысыңыз бен жинағыңызға ең тиімділерін талдап, тізіп береміз.</p>
         <div class="badges">
-            <span class="badge-item"><i class="fas fa-shield-alt" style="color: var(--kaspi-red);"></i> <?php echo clean_xss($site_settings['badge_programs'] ?? '11 Бағдарлама'); ?></span>
-            <span class="badge-item"><i class="fas fa-percentage" style="color: var(--kaspi-red);"></i> <?php echo clean_xss($site_settings['badge_rate'] ?? '2% - 18% мөлшерлеме'); ?></span>
-            <span class="badge-item"><i class="fas fa-bolt" style="color: var(--kaspi-red);"></i> <?php echo clean_xss($site_settings['badge_ai'] ?? 'AI Талдау'); ?></span>
+            <span class="badge-item"><i class="fas fa-shield-alt" style="color: var(--kaspi-red);"></i> 11 Бағдарлама</span>
+            <span class="badge-item"><i class="fas fa-percentage" style="color: var(--kaspi-red);"></i> 2% - 18% мөлшерлеме</span>
+            <span class="badge-item"><i class="fas fa-bolt" style="color: var(--kaspi-red);"></i> AI Талдау</span>
         </div>
     </div>
 
@@ -355,33 +361,33 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="input-group">
                 <label>Жасыңыз</label>
-                <input type="number" id="userAge" placeholder="28" value="<?php echo clean_xss($user_data['age'] ?? ''); ?>">
+                <input type="number" id="userAge" placeholder="28" value="">
             </div>
             <div class="input-group">
                 <label>Аймақ</label>
                 <select id="userCity">
-                    <option value="megapolis" <?php if(isset($user_data['city']) && $user_data['city']=='megapolis') echo 'selected'; ?>>Мегаполис</option>
-                    <option value="region" <?php if(isset($user_data['city']) && $user_data['city']=='region') echo 'selected'; ?>>Өңірлер / Ауыл</option>
+                    <option value="megapolis" >Мегаполис</option>
+                    <option value="region" >Өңірлер / Ауыл</option>
                 </select>
             </div>
         </div>
         <div class="input-group">
             <label>Әлеуметтік мәртебеңіз</label>
             <select id="userStatus">
-                <option value="standard" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='standard') echo 'selected'; ?>>Жалпы топ (Жұмысшы, ЖК)</option>
-                <option value="social" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='social') echo 'selected'; ?>>Әлеуметтік осал топ / Көпбалалы</option>
-                <option value="young_family" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='young_family') echo 'selected'; ?>>Жас отбасы (некеде 5 жылға дейін)</option>
-                <option value="young_pro" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='young_pro') echo 'selected'; ?>>Жас маман / Ғалым / Дәрігер</option>
-                <option value="military" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='military') echo 'selected'; ?>>Әскери қызметкер</option>
+                <option value="standard" >Жалпы топ (Жұмысшы, ЖК)</option>
+                <option value="social" >Әлеуметтік осал топ / Көпбалалы</option>
+                <option value="young_family" >Жас отбасы (некеде 5 жылға дейін)</option>
+                <option value="young_pro" >Жас маман / Ғалым / Дәрігер</option>
+                <option value="military" >Әскери қызметкер</option>
             </select>
         </div>
         <div class="input-group">
             <label>Қазіргі жинағыңыз (Бастапқы жарна ₸)</label>
-            <input type="number" id="userSavings" placeholder="Мысалы: 5000000" value="<?php echo clean_xss($user_data['savings'] ?? ''); ?>">
+            <input type="number" id="userSavings" placeholder="Мысалы: 5000000" value="">
         </div>
         <div class="input-group">
             <label>Таза айлық табысыңыз (₸)</label>
-            <input type="number" id="userIncome" placeholder="Мысалы: 400000" value="<?php echo clean_xss($user_data['income'] ?? ''); ?>">
+            <input type="number" id="userIncome" placeholder="Мысалы: 400000" value="">
         </div>
         <button class="btn-main" onclick="analyzeData()">AI Талдауды бастау</button>
     </div>
@@ -404,18 +410,106 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
             </div>
         </div>
         <div class="finder-grid" id="programFinderGrid">
-            <?php foreach ($program_search_items as $program_id => $program): ?>
-                <a class="finder-card" href="program.php?id=<?php echo rawurlencode($program_id); ?>" data-search="<?php echo clean_xss(mb_strtolower(($program['title'] ?? '') . ' ' . ($program['rate'] ?? '') . ' ' . ($program['desc'] ?? ''), 'UTF-8')); ?>">
+                            <a class="finder-card" href="program-baspana_7_20_25.html" data-search="«7-20-25» ипотекасы 7% жаңа үйлерден баспана алуға арналған тұрақты мөлшерлемелі бағдарлама.">
                     <div class="finder-card-top">
-                        <div class="finder-icon"><i class="fas <?php echo clean_xss($program['icon'] ?? 'fa-home'); ?>"></i></div>
-                        <div class="finder-rate"><?php echo clean_xss($program['rate'] ?? ''); ?></div>
+                        <div class="finder-icon"><i class="fas fa-home"></i></div>
+                        <div class="finder-rate">7%</div>
                     </div>
-                    <div class="finder-title"><?php echo clean_xss($program['title'] ?? $program_id); ?></div>
-                    <div class="finder-desc"><?php echo clean_xss($program['desc'] ?? ''); ?></div>
+                    <div class="finder-title">«7-20-25» ипотекасы</div>
+                    <div class="finder-desc">Жаңа үйлерден баспана алуға арналған тұрақты мөлшерлемелі бағдарлама.</div>
                     <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
                 </a>
-            <?php endforeach; ?>
-        </div>
+                            <a class="finder-card" href="program-nauryz_social.html" data-search="«наурыз» (әлеуметтік) 7% әлеуметтік осал топтар мен кезекте тұрғандарға арналған жеңілдетілген бағыт.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-leaf"></i></div>
+                        <div class="finder-rate">7%</div>
+                    </div>
+                    <div class="finder-title">«Наурыз» (Әлеуметтік)</div>
+                    <div class="finder-desc">Әлеуметтік осал топтар мен кезекте тұрғандарға арналған жеңілдетілген бағыт.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-nauryz_jumysker.html" data-search="«наурыз жұмыскер» 9% ресми табысы бар азаматтарға арналған кеңейтілген ипотека.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-briefcase"></i></div>
+                        <div class="finder-rate">9%</div>
+                    </div>
+                    <div class="finder-title">«Наурыз жұмыскер»</div>
+                    <div class="finder-desc">Ресми табысы бар азаматтарға арналған кеңейтілген ипотека.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-otau.html" data-search="«отау» бағдарламасы 9% жастар мен тұрақты салымшыларға арналған бағдарлама.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-key"></i></div>
+                        <div class="finder-rate">9%</div>
+                    </div>
+                    <div class="finder-title">«Отау» бағдарламасы</div>
+                    <div class="finder-desc">Жастар мен тұрақты салымшыларға арналған бағдарлама.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-zhas_otbasy.html" data-search="«жас отбасы» 6% - 5% некеге тұрғанына 5 жыл толмаған жас отбасыларға арналған өнім.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-users"></i></div>
+                        <div class="finder-rate">6% - 5%</div>
+                    </div>
+                    <div class="finder-title">«Жас Отбасы»</div>
+                    <div class="finder-desc">Некеге тұрғанына 5 жыл толмаған жас отбасыларға арналған өнім.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-standard_50_50.html" data-search="аралық заем (50/50) 5% үй құнының жартысы жиналған жағдайда кезексіз рәсімделетін заем.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-percent"></i></div>
+                        <div class="finder-rate">5%</div>
+                    </div>
+                    <div class="finder-title">Аралық заем (50/50)</div>
+                    <div class="finder-desc">Үй құнының жартысы жиналған жағдайда кезексіз рәсімделетін заем.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-umay.html" data-search="«ұмай» әйелдерге 14.4% қазақстандық әйелдерге арналған ипотекалық бағдарлама.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-female"></i></div>
+                        <div class="finder-rate">14.4%</div>
+                    </div>
+                    <div class="finder-title">«Ұмай» әйелдерге</div>
+                    <div class="finder-desc">Қазақстандық әйелдерге арналған ипотекалық бағдарлама.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-oz_uim.html" data-search="«өз үйім» 6% - 7% жаңа тұрғын үйді бастапқы жарнамен алуға арналған өнім.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-building"></i></div>
+                        <div class="finder-rate">6% - 7%</div>
+                    </div>
+                    <div class="finder-title">«Өз үйім»</div>
+                    <div class="finder-desc">Жаңа тұрғын үйді бастапқы жарнамен алуға арналған өнім.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-green_mortgage.html" data-search="«жасыл ипотека» 7% - 12.5% экологиялық сертификаты бар үйлерді алуға арналған бағдарлама.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-seedling"></i></div>
+                        <div class="finder-rate">7% - 12.5%</div>
+                    </div>
+                    <div class="finder-title">«Жасыл ипотека»</div>
+                    <div class="finder-desc">Экологиялық сертификаты бар үйлерді алуға арналған бағдарлама.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-nauryz_askery.html" data-search="«наурыз әскери» 9% әскери қызметкерлерге арналған жаңа тұрғын үй бағыты.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-shield-alt"></i></div>
+                        <div class="finder-rate">9%</div>
+                    </div>
+                    <div class="finder-title">«Наурыз Әскери»</div>
+                    <div class="finder-desc">Әскери қызметкерлерге арналған жаңа тұрғын үй бағыты.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                            <a class="finder-card" href="program-askery_baspana.html" data-search="«әскери баспана» 6% - 8% түт алатын әскерилерге екінші нарықтан да үй алуға мүмкіндік береді.">
+                    <div class="finder-card-top">
+                        <div class="finder-icon"><i class="fas fa-star"></i></div>
+                        <div class="finder-rate">6% - 8%</div>
+                    </div>
+                    <div class="finder-title">«Әскери баспана»</div>
+                    <div class="finder-desc">ТҮТ алатын әскерилерге екінші нарықтан да үй алуға мүмкіндік береді.</div>
+                    <div class="finder-link">Толығырақ білу <i class="fas fa-arrow-right"></i></div>
+                </a>
+                    </div>
     </div>
 </section>
 
@@ -506,7 +600,7 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
         <p>Жаңа үйлерді сатып алуға арналған Ұлттық Банктің әлеуметтік ипотекалық бағдарламасы.</p>
         <div class="tags"><span class="tag">7% мөлшерлеме</span><span class="tag">20% алғашқы жарна</span></div>
         <ul><li>Басты талап: Атыңызда басқа тұрғын үй болмауы тиіс.</li><li>Тек жаңа пәтер алуға болады.</li></ul>
-        <a href="program.php?id=7_20_25" class="btn-outline">Толық нұсқаулық</a>
+        <a href="program-7_20_25.html" class="btn-outline">Толық нұсқаулық</a>
     </div>
 
     <div class="info-card">
@@ -528,7 +622,7 @@ footer{background:var(--bg-white);color:var(--text-gray);text-align:center;paddi
 
 <footer>
     <div style="font-weight: 700; color: var(--text-dark); margin-bottom: 8px; font-size: 1.2rem;">Baspana Smart</div>
-    <p><?php echo clean_xss($site_settings['footer_text'] ?? '© 2026. Барлық ақпарат сайт ішінде қауіпсіз сақталады.'); ?></p>
+    <p>© 2026. Барлық ақпарат сайт ішінде қауіпсіз сақталады.</p>
 </footer>
 
 <script>
@@ -622,8 +716,8 @@ const programsData = {
         steps: ["Отбасы банкінде арнайы 'Әскери' шот ашу", "ТҮТ аударымдарын сол шотқа бағыттау", "Банкке барып рәсімдеу"]
     }
 };
-const hiddenProgramIds = <?php echo json_encode($hidden_program_ids, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-const customProgramsData = <?php echo json_encode(baspana_custom_programs_for_js(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+const hiddenProgramIds = [];
+const customProgramsData = [];
 Object.assign(programsData, customProgramsData);
 
 function filterProgramCards() {
@@ -785,7 +879,7 @@ function analyzeData() {
                     <ol>${stepsHTML}</ol>
                 </div>
                 
-                <a href="program.php?id=${encodeURIComponent(prog.programId)}" class="btn-main" style="margin-top: 24px; height: 50px;">
+                <a href="program-${encodeURIComponent(prog.programId)}.html" class="btn-main" style="margin-top: 24px; height: 50px;">
                     <i class="fas fa-circle-info"></i> Толығырақ білу
                 </a>
             </div>
