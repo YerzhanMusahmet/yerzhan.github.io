@@ -1,0 +1,731 @@
+<?php
+session_start();
+require 'db.php';
+
+$user_data = null;
+if (isset($_SESSION['user_id'])) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user_data = $stmt->fetch();
+}
+?>
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baspana Smart - Болашақ үйіңіз осында</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --kaspi-red: #E12A2A;
+            --kaspi-red-hover: #C52222;
+            --bg-gray: #F5F5F6;
+            --bg-white: #FFFFFF;
+            --text-dark: #1A1A1A;
+            --text-gray: #757575;
+            --border-light: #EBEBEB;
+            --input-bg: #F1F1F1;
+            --radius-card: 16px;
+            --radius-btn: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        body { background-color: var(--bg-gray); color: var(--text-dark); line-height: 1.5; overflow-x: hidden; }
+
+        /* Жоғарғы Навигация */
+        header {
+            background: var(--bg-white);
+            padding: 16px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 20px; }
+        .hamburger-btn { font-size: 1.5rem; color: var(--text-dark); cursor: pointer; padding: 4px; transition: color 0.2s; }
+        .hamburger-btn:hover { color: var(--kaspi-red); }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .logo i { color: var(--kaspi-red); }
+
+        nav { display: flex; gap: 24px; align-items: center; }
+        nav a { text-decoration: none; color: var(--text-dark); font-weight: 500; font-size: 0.95rem; transition: color 0.2s; }
+        nav a:not(.btn-login):hover { color: var(--kaspi-red); }
+
+        .btn-login { background: var(--bg-gray); color: var(--text-dark) !important; padding: 10px 20px; border-radius: var(--radius-btn); font-weight: 600; transition: background 0.2s; }
+        .btn-login:hover { background: #E4E4E4; }
+        .btn-logout { color: var(--kaspi-red) !important; }
+
+        /* БҮЙІРЛІК МӘЗІР */
+        .sidebar {
+            position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+            background-color: var(--bg-white); color: var(--text-dark);
+            z-index: 2000; transition: left 0.3s ease; display: flex; flex-direction: column;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+        }
+        .sidebar.open { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 20px 16px; border-bottom: 1px solid var(--border-light); }
+        .sidebar-header i { cursor: pointer; font-size: 1.2rem; color: var(--text-dark); transition: color 0.2s; }
+        .sidebar-header i:hover { color: var(--kaspi-red); }
+        .sidebar-menu { list-style: none; padding: 16px; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-item {
+            padding: 14px 16px; margin-bottom: 4px; border-radius: var(--radius-btn);
+            display: flex; align-items: center; gap: 16px; cursor: pointer; transition: background 0.2s;
+            color: var(--text-dark); text-decoration: none; font-size: 0.95rem; font-weight: 500;
+        }
+        .sidebar-item:hover { background-color: var(--bg-gray); }
+        .sidebar-item i { width: 20px; text-align: center; font-size: 1.1rem; color: var(--text-gray); }
+        .sidebar-item.active { background-color: #FEECEB; color: var(--kaspi-red); }
+        .sidebar-item.active i { color: var(--kaspi-red); }
+        .sidebar-section { padding: 24px 16px 8px; font-size: 0.8rem; color: var(--text-gray); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar-bottom { padding: 16px; border-top: 1px solid var(--border-light); }
+
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1500; display: none; opacity: 0; transition: opacity 0.3s; }
+        .menu-overlay.open { opacity: 1; display: block; }
+
+        /* ЖАҢА МОДАЛЬДЫ ТЕРЕЗЕ СТИЛДЕРІ (ӨТЕ ТҰРАҚТЫ) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2500;
+            opacity: 0; visibility: hidden; transition: 0.3s ease; backdrop-filter: blur(3px);
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+
+        .modal-content {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -60%);
+            background: var(--bg-white); width: 90%; max-width: 500px;
+            padding: 40px 32px; border-radius: var(--radius-card); z-index: 2600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .modal-content.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%); }
+
+        .modal-close {
+            position: absolute; top: 20px; right: 24px; font-size: 1.5rem;
+            color: var(--text-gray); cursor: pointer; transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--kaspi-red); }
+
+        /* Басты блок */
+        .hero { margin-top: 60px; padding: 60px 5% 40px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 40px; max-width: 1200px; margin-left: auto; margin-right: auto; }
+        .hero-text { flex: 1; min-width: 320px; padding-top: 40px; }
+        .hero-text h1 { font-size: 3rem; font-weight: 800; margin-bottom: 16px; line-height: 1.1; color: var(--text-dark); letter-spacing: -1px; }
+        .hero-text p { font-size: 1.1rem; color: var(--text-gray); margin-bottom: 32px; max-width: 400px; }
+        .badges { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+        .badge-item { background: var(--bg-white); padding: 10px 20px; border-radius: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-light); font-size: 0.9rem; }
+
+        /* Калькулятор формасы (Минималистік) */
+        .calculator-card { flex: 1; min-width: 350px; max-width: 480px; background: var(--bg-white); padding: 32px; border-radius: var(--radius-card); box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .calculator-card h3 { margin-bottom: 24px; color: var(--text-dark); font-size: 1.5rem; font-weight: 700; }
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.85rem; color: var(--text-gray); }
+        .input-group input, .input-group select { width: 100%; height: 52px; padding: 0 16px; border-radius: var(--radius-btn); border: 1px solid transparent; font-size: 1rem; font-family: inherit; background: var(--input-bg); color: var(--text-dark); font-weight: 500; transition: background 0.2s, border 0.2s; appearance: none; }
+        .input-group select { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23757575' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 16px center; background-size: 16px; }
+        .input-group input:focus, .input-group select:focus { background: var(--bg-white); border-color: var(--kaspi-red); outline: none; }
+        .btn-main { background: var(--kaspi-red); color: #ffffff; border: none; height: 56px; border-radius: var(--radius-btn); font-size: 1.05rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-main:hover { background: var(--kaspi-red-hover); }
+
+        /* ЖАҢА ОТБАСЫ БАНК КАЛЬКУЛЯТОРЫНЫҢ СТИЛДЕРІ */
+        .full-calc-container { max-width: 1200px; margin: 0 auto 60px; background: var(--bg-white); border-radius: var(--radius-card); padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid var(--border-light); }
+        .calc-tabs { display: flex; gap: 24px; border-bottom: 2px solid var(--border-light); margin-bottom: 32px; overflow-x: auto; }
+        .calc-tab { padding: 12px 4px; color: var(--text-gray); font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: 0.2s; }
+        .calc-tab:hover { color: var(--text-dark); }
+        .calc-tab.active { color: var(--kaspi-red); border-bottom-color: var(--kaspi-red); }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 10px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: var(--bg-white); border: 5px solid var(--kaspi-red); cursor: pointer; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #E0E0E0; border-radius: 2px; }
+        input[type=range]:focus { outline: none; }
+        .range-label-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .range-title { color: var(--text-gray); font-size: 0.95rem; font-weight: 500; }
+        .range-value { font-size: 1.2rem; font-weight: 700; color: var(--text-dark); }
+
+        .calc-results-box { background: var(--bg-gray); padding: 32px; border-radius: var(--radius-card); }
+        .calc-res-item { margin-bottom: 24px; }
+        .calc-res-label { color: var(--text-gray); font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+        .calc-res-val { font-size: 1.5rem; font-weight: 800; color: var(--text-dark); }
+        .calc-res-val.highlight { color: var(--kaspi-red); font-size: 2rem; }
+
+        /* Нәтижелер блогы */
+        .result-section { padding: 40px 5%; display: none; }
+        .result-container { max-width: 900px; margin: 0 auto; background: var(--bg-white); border-radius: var(--radius-card); padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        .result-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-light); padding-bottom: 24px; margin-bottom: 24px; }
+        .result-title { color: var(--text-dark); font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+        .result-desc { color: var(--text-gray); font-size: 1rem; margin-top: 8px; }
+        .rate-badge { background: #FEECEB; color: var(--kaspi-red); padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 1.4rem; }
+        .info-list { list-style: none; padding: 0; margin-bottom: 30px; }
+        .info-list li { margin-bottom: 12px; display: flex; gap: 12px; font-size: 1rem; color: var(--text-dark); background: var(--bg-gray); padding: 16px; border-radius: 12px; }
+        .info-list i { color: var(--kaspi-red); margin-top: 3px; font-size: 1.1rem; }
+        .steps-container { background: var(--bg-white); border: 1px solid var(--border-light); padding: 30px; border-radius: var(--radius-card); margin-top: 24px; }
+        .steps-container h4 { margin-bottom: 20px; color: var(--text-dark); font-size: 1.2rem; }
+        .steps-container ol { padding-left: 20px; color: var(--text-gray); font-weight: 500; line-height: 1.8; }
+        .steps-container li { margin-bottom: 15px; padding-left: 10px; }
+        .steps-container li::marker { color: var(--kaspi-red); font-weight: bold; font-size: 1.1rem; }
+
+        /* Ақпараттық блоктар */
+        .section-title { text-align: center; font-size: 2rem; color: var(--text-dark); margin: 60px 0 40px; font-weight: 800; letter-spacing: -0.5px; }
+        .info-sections { padding: 0 5% 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
+        .info-card { background: var(--bg-white); border-radius: var(--radius-card); padding: 32px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; border: 1px solid var(--border-light); }
+        .info-card h3 { color: var(--text-dark); margin-bottom: 16px; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
+        .info-card p { color: var(--text-gray); margin-bottom: 20px; font-size: 0.95rem; }
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+        .tag { background: var(--input-bg); color: var(--text-dark); padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
+        .info-card ul { padding-left: 20px; margin-bottom: 25px; color: var(--text-dark); font-weight: 500; }
+        .info-card ul li { margin-bottom: 10px; }
+        .btn-outline { margin-top: auto; padding: 14px 24px; background: var(--input-bg); color: var(--text-dark); border-radius: var(--radius-btn); text-decoration: none; font-weight: 600; text-align: center; transition: background 0.2s; }
+        .btn-outline:hover { background: #E4E4E4; }
+
+        footer { background: var(--bg-white); color: var(--text-gray); text-align: center; padding: 32px; border-top: 1px solid var(--border-light); font-size: 0.9rem; }
+
+        @media (max-width: 900px) {
+            .hero { padding-top: 40px; flex-direction: column; align-items: center; text-align: center; }
+            .hero-text { padding-top: 0; }
+            .hero-text p { margin: 0 auto 30px; }
+            .badges { justify-content: center; }
+            .calculator-card { width: 100%; max-width: 100%; }
+            .full-calc-container > div { grid-template-columns: 1fr !important; }
+            nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ҚАРАҢҒЫ ФОН ЖӘНЕ БҮЙІРЛІК МӘЗІР -->
+<div class="menu-overlay" id="menuOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="logo" style="font-size: 1.2rem;">
+            <i class="fas fa-home"></i> Baspana
+        </div>
+        <i class="fas fa-times" onclick="toggleSidebar()"></i>
+    </div>
+    
+    <div class="sidebar-menu">
+        <a href="#calculator" class="sidebar-item" onclick="toggleSidebar()">
+            <i class="fas fa-magic"></i> Smart Талдау
+        </a>
+        <a href="#detailed-calc" class="sidebar-item" onclick="toggleSidebar()">
+            <i class="fas fa-sliders-h"></i> Толық калькулятор
+        </a>
+        <!-- Мұндағы Өркен тесті енді Модальды терезені ашады -->
+        <a href="#" class="sidebar-item" onclick="openOrkenModal(); return false;">
+            <i class="fas fa-clipboard-check"></i> Өркенге тест
+        </a>
+        <a href="#kezek" class="sidebar-item" onclick="toggleSidebar()">
+            <i class="fas fa-info-circle"></i> Пайдалы ақпарат
+        </a>
+
+        <div class="sidebar-section">Тарих (Соңғылар)</div>
+        <a href="#" class="sidebar-item active">Ипотека есептеу</a>
+        <a href="#" class="sidebar-item">«Отау» бағдарламасы</a>
+        <a href="#" class="sidebar-item">Жасыл ипотека</a>
+    </div>
+    
+    <div class="sidebar-bottom">
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <a href="profile.php" class="sidebar-item">
+                <i class="fas fa-user"></i> Жеке кабинет
+            </a>
+            <a href="logout.php" class="sidebar-item" style="color: var(--kaspi-red);">
+                <i class="fas fa-sign-out-alt"></i> Шығу
+            </a>
+        <?php else: ?>
+            <a href="login.php" class="sidebar-item">
+                <i class="fas fa-sign-in-alt"></i> Жүйеге кіру
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- ЖОҒАРҒЫ НАВИГАЦИЯ -->
+<header>
+    <div class="header-left">
+        <i class="fas fa-bars hamburger-btn" onclick="toggleSidebar()"></i>
+        <div class="logo">
+            <i class="fas fa-home"></i> Baspana Smart
+        </div>
+    </div>
+    <nav>
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <a href="profile.php" style="color: var(--text-dark);"><i class="fas fa-user-circle" style="color: var(--kaspi-red);"></i> <?php echo htmlspecialchars($user_data['name']); ?></a>
+            <a href="logout.php" class="btn-logout">Шығу</a>
+        <?php else: ?>
+            <a href="login.php" class="btn-login">Кіру</a>
+        <?php endif; ?>
+    </nav>
+</header>
+
+<!-- ӨРКЕН ТЕСТІ (МОДАЛЬДЫ ТЕРЕЗЕ - POPUP) -->
+<div class="modal-overlay" id="orkenModalOverlay" onclick="closeOrkenModal()"></div>
+<div class="modal-content" id="orkenModal">
+    <span class="modal-close" onclick="closeOrkenModal()"><i class="fas fa-times"></i></span>
+    
+    <h3 style="text-align: center; color: var(--text-dark); margin-bottom: 24px; font-size: 1.5rem; font-weight: 700;">
+        <i class="fas fa-clipboard-check" style="color: var(--kaspi-red); margin-right: 10px;"></i> «Өркен» тесті
+    </h3>
+    
+    <div class="input-group">
+        <label>Сіздің жасыңыз 18-ден асты ма?</label>
+        <select id="orkenQ1">
+            <option value="yes">Иә, 18-ден астым</option>
+            <option value="no">Жоқ, кәмелетке толмадым</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label>Атыңызда немесе отбасыңызда үй бар ма?</label>
+        <select id="orkenQ2">
+            <option value="no">Жоқ, ешқандай үй жоқ (соңғы 5 жыл)</option>
+            <option value="yes">Иә, үй бар (немесе жақында саттық)</option>
+            <option value="emergency">Үй бар, бірақ апатты деп танылған</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label>Тіркеуіңіз (Прописка)</label>
+        <select id="orkenQ3">
+            <option value="mega_3_plus">Мегаполисте (3 жылдан АСТЫ)</option>
+            <option value="mega_less_3">Мегаполисте (3 жылдан АЗ)</option>
+            <option value="regions">Өңірлер / Ауыл</option>
+        </select>
+    </div>
+
+    <button class="btn-main" onclick="checkOrkenEligibility()">Нәтижені тексеру</button>
+    <div id="orken-result" style="margin-top: 24px; display: none; padding: 16px; border-radius: 12px; font-size: 1rem; line-height: 1.5;"></div>
+</div>
+
+<!-- SMART ТАЛДАУ БӨЛІМІ -->
+<section class="hero" id="calculator">
+    <div class="hero-text">
+        <h1>Ипотекаңызды <br> есептеңіз</h1>
+        <p>Отбасы банкінің және мемлекеттік бағдарламалардың ішінен сіздің табысыңыз бен жинағыңызға ең тиімдісін талдап береміз. 2026 жылғы соңғы жаңалықтармен толықтырылған.</p>
+        
+        <div class="badges">
+            <span class="badge-item"><i class="fas fa-shield-alt" style="color: var(--kaspi-red);"></i> 10+ Бағдарлама</span>
+            <span class="badge-item"><i class="fas fa-percentage" style="color: var(--kaspi-red);"></i> 2% - 18% мөлшерлеме</span>
+            <span class="badge-item"><i class="fas fa-bolt" style="color: var(--kaspi-red);"></i> AI Талдау</span>
+        </div>
+    </div>
+
+   <div class="calculator-card">
+        <h3>Мәліметтеріңіз</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="input-group">
+                <label>Жасыңыз</label>
+                <input type="number" id="userAge" placeholder="28" value="<?php echo htmlspecialchars($user_data['age'] ?? ''); ?>">
+            </div>
+            <div class="input-group">
+                <label>Аймақ</label>
+                <select id="userCity">
+                    <option value="megapolis" <?php if(isset($user_data['city']) && $user_data['city']=='megapolis') echo 'selected'; ?>>Мегаполис (Аст/Алм)</option>
+                    <option value="region" <?php if(isset($user_data['city']) && $user_data['city']=='region') echo 'selected'; ?>>Өңірлер / Ауыл</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Әлеуметтік мәртебеңіз</label>
+            <select id="userStatus">
+                <option value="standard" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='standard') echo 'selected'; ?>>Жалпы топ (Жұмысшы, ЖК)</option>
+                <option value="social" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='social') echo 'selected'; ?>>Әлеуметтік осал топ / Көпбалалы / Жетім</option>
+                <option value="young_family" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='young_family') echo 'selected'; ?>>Жас отбасы (некеде 5 жылға дейін)</option>
+                <option value="young_pro" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='young_pro') echo 'selected'; ?>>Жас маман / Ғалым / Дәрігер</option>
+                <option value="military" <?php if(isset($user_data['social_status']) && $user_data['social_status']=='military') echo 'selected'; ?>>Әскери қызметкер немесе құқық қорғаушы</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Қазіргі жинағыңыз (Бастапқы жарна ₸)</label>
+            <input type="number" id="userSavings" placeholder="Мысалы: 5000000" value="<?php echo htmlspecialchars($user_data['savings'] ?? ''); ?>">
+        </div>
+
+        <div class="input-group">
+            <label>Таза айлық табысыңыз (₸)</label>
+            <input type="number" id="userIncome" placeholder="Мысалы: 400000" value="<?php echo htmlspecialchars($user_data['income'] ?? ''); ?>">
+        </div>
+
+        <button class="btn-main" onclick="analyzeData()">AI Талдауды бастау</button>
+    </div>
+</section>
+
+<section class="result-section" id="result-section">
+    <div class="result-container" id="result-container">
+        <!-- AI Нәтижелері осында шығады -->
+    </div>
+</section>
+
+<!-- ҚОЛМЕН ЕСЕПТЕУ КАЛЬКУЛЯТОРЫ (СЛАЙДЕРЛЕР) -->
+<section style="padding: 0 5%;" id="detailed-calc">
+    <div class="full-calc-container">
+        <h2 style="color: var(--text-dark); margin-bottom: 24px; font-weight: 800; font-size: 2rem;">Ипотеканы дәл есептеу</h2>
+        
+        <div class="calc-tabs">
+            <div class="calc-tab active" onclick="switchCalcTab(this, 5.0)">Нарық (Аралық заем)</div>
+            <div class="calc-tab" onclick="switchCalcTab(this, 9.0)">Наурыз (9%)</div>
+            <div class="calc-tab" onclick="switchCalcTab(this, 7.0)">Өз үйім (7%)</div>
+            <div class="calc-tab" onclick="switchCalcTab(this, 8.0)">Әскери баспана (8%)</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px;">
+            <div>
+                <div style="margin-bottom: 32px;">
+                    <div class="range-label-container">
+                        <span class="range-title">Тұрғын үй құны:</span>
+                        <span class="range-value" id="dispPrice">20 000 000 ₸</span>
+                    </div>
+                    <input type="range" id="sliderPrice" min="3000000" max="100000000" step="500000" value="20000000" oninput="updateDetailedCalc()">
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                    <div class="range-label-container">
+                        <span class="range-title">Бастапқы жарна / Жинақ:</span>
+                        <span class="range-value" id="dispDeposit">10 000 000 ₸</span>
+                    </div>
+                    <input type="range" id="sliderDeposit" min="0" max="100000000" step="500000" value="10000000" oninput="updateDetailedCalc()">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <div class="range-label-container">
+                        <span class="range-title">Заем мерзімі (ай):</span>
+                        <span class="range-value" id="dispTerm">120 ай</span>
+                    </div>
+                    <input type="range" id="sliderTerm" min="6" max="300" step="6" value="120" oninput="updateDetailedCalc()">
+                </div>
+            </div>
+
+            <div class="calc-results-box">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="calc-res-item">
+                        <div class="calc-res-label">Қажетті заем сомасы:</div>
+                        <div class="calc-res-val" id="resLoanAmt">10 000 000 ₸</div>
+                    </div>
+                    <div class="calc-res-item">
+                        <div class="calc-res-label">Жылдық мөлшерлеме:</div>
+                        <div class="calc-res-val" style="color: var(--kaspi-red);" id="resRateAmt">5.0 %</div>
+                    </div>
+                </div>
+
+                <div class="calc-res-item" style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 24px;">
+                    <div class="calc-res-label" style="font-size: 1rem;">Айлық төлем:</div>
+                    <div class="calc-res-val highlight" id="resMonthlyAmt">106 065 ₸</div>
+                </div>
+
+                <div class="calc-res-item" style="margin-top: 10px;">
+                    <div class="calc-res-label">Артық төлем (Переплата):</div>
+                    <div class="calc-res-val" id="resOverpayAmt">2 727 800 ₸</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<h2 class="section-title" id="kezek">Анықтама және Ақпараттар</h2>
+
+<section class="info-sections">
+    <div class="info-card">
+        <h3>Үй кезегіне тұру (Kezekte.kz)</h3>
+        <p>Мемлекеттен жеңілдетілген 2% немесе 5% мөлшерлемемен үй алу үшін дәстүрлі кезекке тұру әдісі.</p>
+        <div class="tags"><span class="tag">Көпбалалы</span><span class="tag">Мүгедектер</span><span class="tag">Мемқызметкерлер</span></div>
+        <ul>
+            <li>Басты талап: Соңғы 5 жылда ҚР аумағында атыңызда тұрғын үй болмауы тиіс.</li>
+            <li>Портал: өтінімді Kezekte.kz немесе Egov.kz арқылы онлайн бересіз.</li>
+        </ul>
+        <a href="https://kezekte.kz" target="_blank" class="btn-outline">Kezekte.kz порталына өту</a>
+    </div>
+
+    <div class="info-card" style="border: 2px solid var(--kaspi-red);">
+        <h3>Жаңа «Өркен» порталы</h3>
+        <p>Жүйе 14 мемлекеттік дерекқормен байланысқандықтан, үй кезегіне тұру үшін қағаз құжат жинаудың қажеті жоқ.</p>
+        <div class="tags">
+            <span class="tag" style="background: #FEECEB; color: var(--kaspi-red);">Цифрлық жүйе</span>
+            <span class="tag" style="background: #FEECEB; color: var(--kaspi-red);">SMS растау</span>
+        </div>
+        <ul>
+            <li>Мегаполистерде (Астана, Алматы, Шымкент) кемінде 3 жыл тұрақты тіркеу қажет.</li>
+            <li>Отбасы мүшелеріне келетін SMS арқылы онлайн растау жүргізіледі.</li>
+        </ul>
+        <a href="https://orken.otbasybank.kz" target="_blank" class="btn-outline" style="border-color: var(--kaspi-red); color: var(--kaspi-red);">Orken.otbasybank.kz</a>
+    </div>
+
+    <div class="info-card">
+        <h3>Отбасы банкінің депозит жүйесі</h3>
+        <p>Қазақстандағы ең төменгі пайыздар (3.5% - 5%) тек Тұрғын үй құрылыс жинақ жүйесінде ғана бар.</p>
+        <div class="tags"><span class="tag">Аралық заем</span><span class="tag">Сыйлықақы 20%</span><span class="tag">Арнау</span></div>
+        <ul>
+            <li>Егер сізде үй құнының 50%-ы бірден болса, несиені 5%-бен ала аласыз.</li>
+            <li>Үй құнының 50%-ын 3 жыл бойы жинасаңыз, пайыз 3.5%-дан басталады.</li>
+        </ul>
+        <a href="https://hcsbk.kz/kz/" target="_blank" class="btn-outline">Сайтқа өту</a>
+    </div>
+</section>
+
+<footer>
+    <div style="font-weight: 700; color: var(--text-dark); margin-bottom: 8px; font-size: 1.2rem;">Baspana Smart</div>
+    <p>&copy; 2026. hcsbk.kz, kezekte.kz және orken.otbasybank.kz деректері негізінде.</p>
+</footer>
+
+<script>
+    // 1. ИПОТЕКА БАҒДАРЛАМАЛАРЫНЫҢ ТОЛЫҚ БАЗАСЫ (AI ТАЛДАУ ҮШІН)
+    const programsData = {
+        nauryz_social: {
+            title: "«Наурыз» ипотекасы (Әлеуметтік)", rate: "7%",
+            description: "Халықтың әлеуметтік осал топтарына және кезекте тұрғандарға арналған 2026 жылғы бағдарлама.",
+            features: ["Бастапқы жарна: 10-20%", "Мөлшерлеме: әлеуметтік осал топтағы адамдар үшін 7%", "Максималды сома: Алматы мен Астана үшін 36 млн. тг", "Талап: Депозитте 2 млн. теңгеден артық сомма болуы керек"],
+            steps: ["Шотта 2 миллион теңгенің бар екеніне көз жеткізу", "Baspana Market порталында өтінім беру", "Мақұлданғаннан кейін үй таңдау"],
+            linkText: "Бағдарлама туралы толық оқу", linkUrl: "https://hcsbk.kz/ru/to-get-a-loan/nauryz/"
+        },
+        nauryz_jumysker: {
+            title: "«Наурыз жұмыскер»", rate: "9%",
+            description: "Барлық санаттағы жұмыс істейтін азаматтарға арналған ауқымды бағдарлама.",
+            features: ["Бастапқы жарна: 20%", "Мөлшерлеме: 9%", "Басты талап: 3-6 айдан бастап ресми табыстың болуы."],
+            steps: ["Табысыңызды растау (кемінде 3 ай үздіксіз)", "Baspana Market арқылы өтінім беру", "Жаңа ғимараттан пәтер таңдау"],
+            linkText: "Baspana Market-ке өту", linkUrl: "https://hcsbk.kz/ru/to-get-a-loan/nauryz-zhumysker/"
+        },
+        otau: {
+            title: "«Отау» бағдарламасы", rate: "9%",
+            description: "Отбасы банкінің тұрақты салымшыларына және жастарға арналған классикалық бағдарлама.",
+            features: ["Бастапқы жарна: 20%", "Мөлшерлеме: 9% (ЖТСМ 9.2%-дан бастап)", "Негізгі талап: Депозитіңіздің ашылғанына кемінде 18 ай болуы керек.", "Алматы/Астанада тек жаңа үй"],
+            steps: ["Депозит мерзімін тексеру (18 айдан асқан ба?)", "Baspana Market-те өтінім қалдыру", "Ұпай саны бойынша тізімге ілігу"],
+            linkText: "«Отау» бағдарламасы туралы", linkUrl: "https://hcsbk.kz/ru/to-get-a-loan/otau/"
+        },
+        zhas_otbasy: {
+            title: "«Жас Отбасы» бағдарламасы", rate: "6% - 5%",
+            description: "Жаңадан отау құрған (некеге тұрғанына 5 жыл толмаған) жас отбасыларға арналған өнім.",
+            features: ["Бастапқы жарна: 50%", "Мөлшерлеме: бастапқыда 6%, кейін 5%-ға дейін төмендейді", "Кез келген дайын үй немесе жер алып, үй салуға болады."],
+            steps: ["Отбасы банкінен ерлі-зайыптының біреуі депозит ашу", "Үй құнының 50%-ын депозитке салу", "Банкке барып несиені ресімдеу"],
+            linkText: "Жас Отбасы бағдарламасы", linkUrl: "https://hcsbk.kz/ru/save/young-family/"
+        },
+        standard_50_50: {
+            title: "Аралық заем (50/50 стандарт)", rate: "5%",
+            description: "Сіздің жинағыңыз жеткілікті болғандықтан, ешқандай кезексіз стандартты жүйемен кез келген үйді алу тиімді.",
+            features: ["Қолыңызда үй құнының 50%-ы бар болса қолданылады", "Мөлшерлеме: 5% (3 жылдан соң 3.5%-ға дейін төмендейді)", "Кез келген үйді шектеусіз алуға болады"],
+            steps: ["Таңдаған үйіңізді табу және бағалату", "Отбасы банкіне барып депозит ашу және 50% соманы салу", "Кредиттік өтінім беру"],
+            linkText: "Аралық заем туралы оқу", linkUrl: "https://hcsbk.kz/most-important/promzaim/"
+        },
+        umay: {
+            title: "«Ұмай» әйелдер ипотекасы", rate: "Жеңілдетілген",
+            description: "Қазақстандық әйелдерге арналған тиімді баспана бағдарламасы.",
+            features: ["Тұрғын үйді қайталама нарықта да сатып алуға болады", "Меншікте басқа жылжымайтын мүліктің болуына шектеулер жоқ"],
+            steps: ["Табысты растау", "Кез келген нарықтан пәтер іздеу", "Банкке өтінім қалдыру"],
+            linkText: "Бағдарлама туралы оқу", linkUrl: "https://hcsbk.kz/to-get-a-loan/umai/"
+        },
+        oz_uim: {
+            title: "«Өз үйім» бағдарламасы", rate: "6% - 7%",
+            description: "Қолында бастапқы жарнасы бар адамдар үшін үлкен сомада (100 млн-ға дейін) қарыз алуға мүмкіндік береді.",
+            features: ["Бастапқы жарна: Тұрғын үй құнының 20%", "Сыйақы: 6-7%", "Қарыз сомасы: 100 млн. теңгеге дейін"],
+            steps: ["Үйдің құнының кемінде 20%-ын жинау", "Таңдаған үйіңізді табу", "Отбасы банкі арқылы несиені ресімдеу"],
+            linkText: "Толық мәлімет", linkUrl: "https://hcsbk.kz/to-get-a-loan/your-home/"
+        },
+        green_mortgage: {
+            title: "«Жасыл ипотека» (Green Mortgage)", rate: "7% - 12.5%",
+            description: "«Жасыл стандартқа» (энергия үнемдейтін) сәйкес келетін нысаннан тұрғын үй сатып алуға берілетін қарыз.",
+            features: ["Бастапқы жарна: 20%-дан бастап", "Сыйақы: 12,5 %. Мүгедектігі бар адамдар үшін - 7%", "Тек экологиялық сертификаты бар үйлерге жарамды."],
+            steps: ["Экологиялық үйлер тізімін алу", "Құрылыс компаниясынан сертификат сұрау", "Несиеге өтінім беру"],
+            linkText: "Жасыл ипотека туралы", linkUrl: "https://hcsbk.kz/zelenaya-ipoteka/"
+        },
+        nauryz_askery: {
+            title: "«Наурыз Әскери»", rate: "9%",
+            description: "Әскери қызметшілерге арналған жаңа ауқымды бағдарлама.",
+            features: ["Бастапқы жарна: 0-50%", "Сыйақы: 9%", "Ерекшелік: 20%-50% бастапқы жарна салынса, 80 млн. теңгеге дейін үй алуға болады"],
+            steps: ["Тұрғын үй төлемдерін растау", "Baspana Market арқылы жаңа үй таңдау", "Өтінім беру"],
+            linkText: "Әскери өнімдер", linkUrl: "https://hcsbk.kz/ru/to-get-a-loan/nauryz-askeri/"
+        },
+        askery_baspana: {
+            title: "«Әскери баспана» (Екінші нарық)", rate: "6% - 8%",
+            description: "Әскери қызметшілерге ескі (қайталама нарықтағы) үйлерді де сатып алуға мүмкіндік беретін бағдарлама.",
+            features: ["Артықшылығы: Кез келген үйді сатып алуға болады", "Бастапқы жарна: 15-50%", "Төлемді мемлекеттен бөлінетін ТҮТ арқылы жабуға болады"],
+            steps: ["Отбасы банкінде арнайы 'Әскери' шот ашу", "ТҮТ аударымдарын сол шотқа бағыттау", "Банкке барып рәсімдеу"],
+            linkText: "Әскери баспана", linkUrl: "https://hcsbk.kz/to-get-a-loan/military-product/"
+        }
+    };
+
+    // 2. AI ТАЛДАУ ФУНКЦИЯСЫ
+    function analyzeData() {
+        const age = parseInt(document.getElementById('userAge').value);
+        const city = document.getElementById('userCity').value;
+        const status = document.getElementById('userStatus').value;
+        const savings = parseInt(document.getElementById('userSavings').value) || 0;
+        const income = parseInt(document.getElementById('userIncome').value);
+        
+        const resultSection = document.getElementById('result-section');
+        const resultContainer = document.getElementById('result-container');
+
+        if (!age || !income) { alert("Өтінеміз, жасыңыз бен табысыңызды толық енгізіңіз!"); return; }
+
+        let selectedProgram = {};
+        
+        if (status === 'military') {
+            if (savings >= 5000000) {
+                selectedProgram = programsData.askery_baspana; 
+                selectedProgram.features.push("<strong style='color: var(--kaspi-red)'>Ескерту:</strong> Жаңа үй алғыңыз келсе, «Наурыз Әскери» бағдарламасы да сізге қолжетімді.");
+            } else { selectedProgram = programsData.nauryz_askery; }
+        } 
+        else if (savings >= 10000000) {
+            if (income > 500000 && city === 'megapolis') { selectedProgram = programsData.green_mortgage; } 
+            else if (savings >= 20000000) { selectedProgram = programsData.oz_uim; } 
+            else { selectedProgram = programsData.standard_50_50; }
+        } 
+        else if (status === 'social') {
+            selectedProgram = programsData.nauryz_social;
+            if(savings < 2000000) { selectedProgram.features.push("<strong style='color: var(--kaspi-red);'>Маңызды:</strong> Өтінім беру үшін депозитте 2 млн. теңге болуы шарт."); }
+        } 
+        else if (status === 'young_family') {
+            if (savings >= 3000000) { selectedProgram = programsData.zhas_otbasy; } 
+            else {
+                selectedProgram = programsData.otau; 
+                selectedProgram.features.push("<strong style='color: var(--text-dark)'>Ескерту:</strong> Депозитіңіз жаңа ашылған болса, «Наурыз жұмыскер» бағдарламасын таңдаңыз.");
+            }
+        } 
+        else if (age <= 35 && status !== 'social') {
+            selectedProgram = programsData.otau;
+            selectedProgram.features.push("<strong style='color: var(--text-dark)'>Балама:</strong> Депозит мерзімі 18 айға толмаса, «Наурыз жұмыскер» бағдарламасын қарастырыңыз.");
+        } 
+        else {
+            selectedProgram = programsData.nauryz_jumysker;
+            selectedProgram.features.push("<strong style='color: var(--text-dark)'>Әйелдерге арналған балама:</strong> Егер сіз әйел адам болсаңыз, екінші нарыққа да жарамды «Ұмай» ипотекасын көре аласыз.");
+            if(savings < 2000000) { selectedProgram.features.push("<strong style='color: var(--kaspi-red);'>Маңызды:</strong> Бағдарламаға қатысу үшін депозитке 2 млн. теңге толықтыруыңыз керек."); }
+        }
+
+        let featuresHTML = selectedProgram.features.map(f => `<li><i class="fas fa-check" style="font-size: 0.9rem; margin-top:4px;"></i> <span>${f}</span></li>`).join('');
+        let stepsHTML = selectedProgram.steps.map(s => `<li>${s}</li>`).join('');
+        
+        resultContainer.innerHTML = `
+            <div class="result-header">
+                <div>
+                    <div class="result-title">${selectedProgram.title}</div>
+                    <div class="result-desc">Сіз үшін ең оңтайлы шешім</div>
+                </div>
+                <div class="rate-badge">${selectedProgram.rate}</div>
+            </div>
+            
+            <p style="color: var(--text-gray); margin-bottom: 20px;">${selectedProgram.description}</p>
+            <h4 style="margin-bottom: 16px; color: var(--text-dark);">Шарттар:</h4>
+            <ul class="info-list">${featuresHTML}</ul>
+
+            <div class="steps-container">
+                <h4>Өтінім беру қадамдары</h4>
+                <ol>${stepsHTML}</ol>
+            </div>
+            
+            <a href="${selectedProgram.linkUrl}" target="_blank" class="btn-main" style="margin-top: 30px;">Ресми сайтында толық көру</a>
+        `;
+
+        resultSection.style.display = "block";
+        setTimeout(() => { resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+    }
+
+    // 3. ҚОЛМЕН ЕСЕПТЕУ КАЛЬКУЛЯТОРЫ (СЛАЙДЕРЛЕР)
+    let currentDetailedRate = 5.0;
+
+    function switchCalcTab(element, rate) {
+        document.querySelectorAll('.calc-tab').forEach(t => t.classList.remove('active'));
+        element.classList.add('active');
+        currentDetailedRate = rate;
+        updateDetailedCalc();
+    }
+
+    function updateDetailedCalc() {
+        let price = parseInt(document.getElementById('sliderPrice').value);
+        let deposit = parseInt(document.getElementById('sliderDeposit').value);
+
+        if (deposit > price) { deposit = price; document.getElementById('sliderDeposit').value = deposit; }
+        let term = parseInt(document.getElementById('sliderTerm').value);
+
+        document.getElementById('dispPrice').innerText = price.toLocaleString('ru-RU') + " ₸";
+        document.getElementById('dispDeposit').innerText = deposit.toLocaleString('ru-RU') + " ₸";
+        document.getElementById('dispTerm').innerText = term + " ай";
+
+        let loanAmount = price - deposit;
+        if(loanAmount < 0) loanAmount = 0;
+        document.getElementById('resLoanAmt').innerText = loanAmount.toLocaleString('ru-RU') + " ₸";
+        document.getElementById('resRateAmt').innerText = currentDetailedRate.toFixed(1) + " %";
+
+        let monthlyRate = currentDetailedRate / 100 / 12;
+        let monthlyPayment = 0;
+
+        if (loanAmount > 0 && currentDetailedRate > 0) {
+            monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, term)) / (Math.pow(1 + monthlyRate, term) - 1);
+        } else if (loanAmount > 0 && currentDetailedRate === 0) {
+            monthlyPayment = loanAmount / term;
+        }
+
+        let overpayment = (monthlyPayment * term) - loanAmount;
+        if (overpayment < 0) overpayment = 0;
+
+        document.getElementById('resMonthlyAmt').innerText = Math.round(monthlyPayment).toLocaleString('ru-RU') + " ₸";
+        document.getElementById('resOverpayAmt').innerText = Math.round(overpayment).toLocaleString('ru-RU') + " ₸";
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { updateDetailedCalc(); });
+
+    // 4. ӨРКЕН ЖҮЙЕСІН ТЕКСЕРУ (МОДАЛЬДЫ ТЕРЕЗЕ ЛОГИКАСЫ)
+    function checkOrkenEligibility() {
+        const q1 = document.getElementById('orkenQ1').value;
+        const q2 = document.getElementById('orkenQ2').value;
+        const q3 = document.getElementById('orkenQ3').value;
+        const resultDiv = document.getElementById('orken-result');
+        
+        let isEligible = true;
+        let errors = [];
+
+        if (q1 === 'no') { isEligible = false; errors.push("Кезекке тек 18 жастан асқан азаматтар тұра алады."); }
+        if (q2 === 'yes') { isEligible = false; errors.push("Соңғы 5 жылда үй болмауы тиіс."); }
+        if (q3 === 'mega_less_3') { isEligible = false; errors.push("Мегаполисте кемінде 3 жыл тіркеу қажет."); }
+
+        resultDiv.style.display = "block";
+        
+        if (isEligible) {
+            resultDiv.style.background = "#E8F5E9"; resultDiv.style.color = "#2E7D32"; resultDiv.style.border = "1px solid #A5D6A7";
+            resultDiv.innerHTML = "<strong><i class='fas fa-check-circle'></i> Құттықтаймыз!</strong><br><br> Сіздің мәліметтеріңіз «Өркен» порталының талаптарына сай келеді.<br><br><a href='https://orken.otbasybank.kz/' target='_blank' class='btn-main' style='background: #2E7D32; display: inline-flex; max-width:250px; text-decoration: none;'>Orken.otbasybank.kz өту</a>";
+        } else {
+            resultDiv.style.background = "#FEECEB"; resultDiv.style.color = "#C52222"; resultDiv.style.border = "1px solid #FAD2D2";
+            resultDiv.innerHTML = "<strong><i class='fas fa-exclamation-circle'></i> Өкінішке қарай:</strong><br><ul style='margin-top: 15px; padding-left: 20px; text-align: left;'>" + errors.map(e => "<li style='margin-bottom: 8px;'>" + e + "</li>").join('') + "</ul>";
+        }
+    }
+
+    // 5. БҮЙІРЛІК МӘЗІР МЕН МОДАЛЬДЫ ТЕРЕЗЕНІ БАСҚАРУ
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('menuOverlay');
+        
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+        } else {
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+        }
+    }
+
+    function openOrkenModal() {
+        // Мәзірді жабу
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('menuOverlay').classList.remove('open');
+        
+        // Модальды терезені ашу
+        document.getElementById('orkenModalOverlay').classList.add('open');
+        document.getElementById('orkenModal').classList.add('open');
+    }
+
+    function closeOrkenModal() {
+        document.getElementById('orkenModalOverlay').classList.remove('open');
+        document.getElementById('orkenModal').classList.remove('open');
+        
+        // Терезе жабылғанда нәтижені тазалау
+        setTimeout(() => {
+            document.getElementById('orken-result').style.display = 'none';
+        }, 300);
+    }
+</script>
+
+</body>
+</html>
